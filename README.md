@@ -149,15 +149,28 @@ corepack enable pnpm      # or: npm install -g pnpm
 `--profile` is **required**; plugin management has no default profile. `dsh plugin add …` on its own
 fails with `error: required option '--profile <name>' not specified`.
 
-The loader consumes built artifacts and `dist/` is gitignored, so build once first:
+### From GitHub — one command
 
 ```sh
-npm install && npm run build
+dsh plugin --profile web add github:Chealsea10/dsh-peak-whale#v0.1.0
 ```
 
-Then, **from this directory**, add the plugin to the profile that serves your web UI:
+`dist/` is **committed on purpose**, and this is why: a git dependency is built through its
+`prepare` script, and pnpm ≥ 10 refuses to run a dependency's build scripts until the consumer
+allowlists them (`ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED`). Shipping the built output removes that step
+instead of documenting it — the package declares no build scripts at all, so there is nothing for
+pnpm to block. `npm run check-dist` (part of `verify`) keeps the arrangement honest: it fails whenever
+a fresh build differs from what is committed.
+
+### From a local checkout
+
+Handy when you want to hack on the plugin. `dist/` is already in the checkout, so nothing needs
+building just to install it:
 
 ```sh
+git clone https://github.com/Chealsea10/dsh-peak-whale
+cd dsh-peak-whale
+npm install            # devDependencies only: typescript, esbuild, react types
 dsh plugin --profile web add .
 ```
 
@@ -165,42 +178,25 @@ Use `.` (or an absolute path) rather than the folder name. Relative path specs a
 directory you invoke `dsh` from, so `./dsh-peak-whale` typed from *inside* this checkout would point
 at a nested directory that does not exist.
 
-On success `dsh` reconciles the profile's `dsh.profile.bundles` list against the installed state: a
-dependency that declares `dsh.bundle` — this package declares `cordis.patch.yml` — is appended as a
-profile layer automatically, so no manual manifest editing. A dependency without `dsh.bundle` is
-installed as a plain library and reported with a warning. Restart `dsh web` to pick up the new layer.
-
-**From GitHub** the artifact is built on install instead:
+After editing sources, rebuild and re-run the gates — `npm run verify` includes `check-dist`, so a
+stale `dist/` cannot be committed by accident. `check-dist` compares the working tree against HEAD, so
+stage the rebuilt output first:
 
 ```sh
-dsh plugin --profile web add github:Chealsea10/dsh-peak-whale#v0.1.0
+npm run build && git add -A && npm run verify
 ```
 
-`dist/` is not committed, so the install runs this package's `prepare` script — and pnpm ≥ 10 blocks
-a git dependency's build scripts until it is allowlisted. The first attempt therefore stops with:
+### What installing does
 
-```
-Error: ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED
-  The git-hosted package "dsh-peak-whale@0.1.0" needs to execute build scripts but is not
-  in the "allowBuilds" allowlist.
-```
+`dsh` reconciles the profile's `dsh.profile.bundles` list against the installed state: a dependency
+that declares `dsh.bundle` — this package declares `cordis.patch.yml` — is appended as a profile
+layer automatically, so no manual manifest editing. A dependency without `dsh.bundle` is installed as
+a plain library and reported with a warning.
 
-Copy the exact key pnpm prints into the profile's `pnpm-workspace.yaml` and re-run the same command
-(pnpm keys the entry by the resolved tarball URL, so the pinned ref is part of it):
+**Restart `dsh web`.** A running process holds its own snapshot of the client bundle, so the tools
+register on the next boot while the chip and the card only appear after that restart.
 
-```yaml
-allowBuilds:
-  dsh-peak-whale@https://codeload.github.com/Chealsea10/dsh-peak-whale/tar.gz/<resolved-sha>: true
-```
-
-Installing from a local checkout instead (see above) skips this: you build once yourself and the
-directory is linked, never packed.
-
-The plugin only appears in dsh **after** one of the steps above — installing registers its bundle
-(`cordis.patch.yml`) in the dsh profile; from then on both halves load automatically on every
-`dsh web` start, no web-app rebuild needed.
-
-**Local development without installing** — build, copy `cordis.example.yml`, point its `name` at a
+**Local development without installing** — copy `cordis.example.yml`, point its `name` at a
 **`file://` URL to `dist/index.js`** (not `src/index.ts`: the sources use NodeNext `.js` specifiers
 that Node resolves literally and cannot map back to `.ts`), then:
 
@@ -231,8 +227,9 @@ failure.
 ## Development
 
 ```sh
-npm install
-npm run verify        # build + host/client typecheck, pricing assertions, tool smoke test, client gate
+npm install           # devDependencies only — dist/ is already committed
+npm run build         # rebuild dist/ after editing sources
+npm run verify        # build + dist-drift gate + typechecks + pricing assertions + smoke + client gate
 npm run browser-check # optional: real-browser check against a running `dsh web`
 ```
 
@@ -254,6 +251,9 @@ Verification layers, all wired into `npm run verify`:
 - `npm run build` — `tsc` for the host **excluding** `src/client` (so a `tsc` pass can never
   overwrite the bundle with unbundled ESM), `tsc` declarations for the client half, then the client
   bundle last;
+- `npm run check-dist` — fails when the freshly built `dist/` differs from the committed one, which is
+  the single hazard of shipping build output in git. Skips (rather than fails) outside a git
+  checkout;
 - `npm run selfcheck` — ~40 known-instant cases (Mon/Sun series, DST in Berlin, degenerate configs,
   bad input, rendering) against the compiled pure modules;
 - `npm run smoke` — runs `apply()` against a **cordis-faithful** fake context: undeclared service

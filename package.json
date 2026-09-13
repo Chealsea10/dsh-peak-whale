@@ -22,12 +22,12 @@
   "scripts": {
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.client.json && node scripts/build-client.mjs",
     "build:client": "node scripts/build-client.mjs",
-    "prepare": "node scripts/prepare.mjs",
+    "check-dist": "node scripts/check-dist.mjs",
     "selfcheck": "tsc src/pricing.ts src/render.ts src/client/card-model.ts --outDir .selfcheck --target ES2022 --module NodeNext --moduleResolution NodeNext --strict --skipLibCheck && node scripts/selfcheck.mjs && node scripts/parse-check.mjs",
     "smoke": "node scripts/smoke.mjs",
     "client-check": "node scripts/client-check.mjs",
     "browser-check": "node scripts/browser-check.mjs",
-    "verify": "npm run build && npm run selfcheck && npm run smoke && npm run client-check"
+    "verify": "npm run build && npm run check-dist && npm run selfcheck && npm run smoke && npm run client-check"
   },
   "keywords": [
     "dsh-plugin",

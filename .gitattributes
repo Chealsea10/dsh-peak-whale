@@ -1,0 +1,3 @@
+# dist/ is committed, so the checkout must not depend on the platform's line
+# endings: force LF everywhere and keep every text file in the index normalized.
+* text=auto eol=lf
