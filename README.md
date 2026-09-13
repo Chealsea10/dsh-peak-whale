@@ -170,16 +170,35 @@ dependency that declares `dsh.bundle` — this package declares `cordis.patch.ym
 profile layer automatically, so no manual manifest editing. A dependency without `dsh.bundle` is
 installed as a plain library and reported with a warning. Restart `dsh web` to pick up the new layer.
 
-**From GitHub** the artifact is built on install instead; pnpm ≥ 10 may ask you to allow the
-`prepare` script by adding the package to the profile's `pnpm-workspace.yaml` under `allowBuilds`:
+**From GitHub** the artifact is built on install instead:
 
 ```sh
-dsh plugin --profile web add github:Chealsea10/dsh-peak-whale#<commit-sha>
+dsh plugin --profile web add github:Chealsea10/dsh-peak-whale#v0.1.0
 ```
 
+`dist/` is not committed, so the install runs this package's `prepare` script — and pnpm ≥ 10 blocks
+a git dependency's build scripts until it is allowlisted. The first attempt therefore stops with:
+
+```
+Error: ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED
+  The git-hosted package "dsh-peak-whale@0.1.0" needs to execute build scripts but is not
+  in the "allowBuilds" allowlist.
+```
+
+Copy the exact key pnpm prints into the profile's `pnpm-workspace.yaml` and re-run the same command
+(pnpm keys the entry by the resolved tarball URL, so the pinned ref is part of it):
+
+```yaml
+allowBuilds:
+  dsh-peak-whale@https://codeload.github.com/Chealsea10/dsh-peak-whale/tar.gz/<resolved-sha>: true
+```
+
+Installing from a local checkout instead (see above) skips this: you build once yourself and the
+directory is linked, never packed.
+
 The plugin only appears in dsh **after** one of the steps above — installing registers its bundle
-(`cordis.patch.yml`) in the dsh profile; from then on both halves (tools + web card) load
-automatically on every `dsh web` start, no web-app rebuild needed.
+(`cordis.patch.yml`) in the dsh profile; from then on both halves load automatically on every
+`dsh web` start, no web-app rebuild needed.
 
 **Local development without installing** — build, copy `cordis.example.yml`, point its `name` at a
 **`file://` URL to `dist/index.js`** (not `src/index.ts`: the sources use NodeNext `.js` specifiers
