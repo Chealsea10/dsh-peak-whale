@@ -1,0 +1,35 @@
+# Local development overlay for dsh-peak-whale.
+#
+# Build first — the loader consumes the compiled entry, not the TypeScript
+# sources (their NodeNext-style relative imports use `.js` specifiers, which
+# Node resolves literally and cannot map back to `.ts`):
+#
+#   npm install && npm run build
+#
+# Then replace the `name` below with a `file://` URL to this plugin's BUILT entry
+# (the loader resolves module paths from the profile directory, not from here)
+# and boot the profile the web UI is served from:
+#
+#   dsh web --patch /absolute/path/to/dsh-peak-whale/cordis.example.yml
+#
+# Use the file:// URL form rather than a bare filesystem path: dsh 0.1.0-rc.x
+# rejects the latter with ERR_UNSUPPORTED_ESM_URL_SCHEME ("Received protocol
+# 'c:'"), while build 0.1.5-rc.1 accepts both. On Windows:
+#   file:///C:/path/to/dsh-peak-whale/dist/index.js
+#
+# The web UI is then at http://127.0.0.1:3080. Launcher flags must precede the
+# web app's own flags, so keep `--patch` before `--port`/`--no-open`.
+#
+# A host without `settings.installSection` (dsh 0.1.0-rc.x) still loads the
+# tools; only the web config card has no namespace to bind, and the plugin warns.
+
+- insert:
+    - id: peak-whale
+      name: 'file:///absolute/path/to/dsh-peak-whale/dist/index.js'
+      config:
+        timeZone: 'Asia/Shanghai'
+        peakWindows: ['09:00-12:00', '14:00-18:00']
+        peakWeekdaysOnly: true
+        peakMultiplier: 1
+        offPeakMultiplier: 0.5
+        # apiKey: 'sk-...'   # optional; enables balance in deepseek_peak_status

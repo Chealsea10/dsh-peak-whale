@@ -1,0 +1,67 @@
+{
+  "name": "dsh-peak-whale",
+  "version": "0.1.0",
+  "description": "DeepSeek API peak/off-peak pricing awareness for DeepSeek Harness (dsh): current tariff with countdown, optional balance, and next half-price windows ready for schedule_create.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./dist/client/index.d.ts",
+      "default": "./dist/client/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "cordis.patch.yml"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.client.json && node scripts/build-client.mjs",
+    "build:client": "node scripts/build-client.mjs",
+    "prepare": "node scripts/prepare.mjs",
+    "selfcheck": "tsc src/pricing.ts src/render.ts src/client/card-model.ts --outDir .selfcheck --target ES2022 --module NodeNext --moduleResolution NodeNext --strict --skipLibCheck && node scripts/selfcheck.mjs && node scripts/parse-check.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "client-check": "node scripts/client-check.mjs",
+    "browser-check": "node scripts/browser-check.mjs",
+    "verify": "npm run build && npm run selfcheck && npm run smoke && npm run client-check"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "dsh",
+    "deepseek"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Chealsea10/dsh-peak-whale.git"
+  },
+  "homepage": "https://github.com/Chealsea10/dsh-peak-whale#readme",
+  "bugs": {
+    "url": "https://github.com/Chealsea10/dsh-peak-whale/issues"
+  },
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": ["@deepseek-ai/dsh-client-ui-settings-plugins"]
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-tools": "*",
+    "@deepseek-ai/schemastery": "*"
+  },
+  "devDependencies": {
+    "@types/react": "~18.3.1",
+    "esbuild": "^0.24.0",
+    "react": "^18.3.1",
+    "typescript": "^5.9.3"
+  }
+}
