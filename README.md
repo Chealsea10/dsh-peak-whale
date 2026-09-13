@@ -152,7 +152,7 @@ fails with `error: required option '--profile <name>' not specified`.
 ### From GitHub — one command
 
 ```sh
-dsh plugin --profile web add github:Chealsea10/dsh-peak-whale#v0.1.0
+dsh plugin --profile web add github:Chealsea10/dsh-peak-whale#v0.1.1
 ```
 
 `dist/` is **committed on purpose**, and this is why: a git dependency is built through its

@@ -163,7 +163,12 @@ export function apply(ctx: Context, config: Config) {
             : null,
         }
         if (args.includeBalance === true) {
-          value.balance = await balanceValue(config, exec.signal)
+          // source(), not the `config` closure: once the settings provider
+          // attaches, the authoritative section (and with it the apiKey/apiBase
+          // the user typed into the card) lives behind source(). Reading the
+          // composition entry here silently reported "no apiKey configured" for
+          // every user who configured the key through the UI.
+          value.balance = await balanceValue(source(), exec.signal)
         }
         return value
       },

@@ -1,6 +1,6 @@
 {
   "name": "dsh-peak-whale",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "DeepSeek API peak/off-peak pricing awareness for DeepSeek Harness (dsh): current tariff with countdown, optional balance, and next half-price windows ready for schedule_create.",
   "type": "module",
   "main": "dist/index.js",

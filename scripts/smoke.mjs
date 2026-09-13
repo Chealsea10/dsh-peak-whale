@@ -135,6 +135,20 @@ assert.equal(reboundTools.length, 2, 'the second composition must register both 
 const rebound = await reboundTools[0].execute({ includeBalance: false }, exec)
 assert.match(rebound.nowLocal, /\(UTC\)$/, 'a settings change must change the pricing time zone the tools use')
 
+// The apiKey has to travel with the settings source too. Reading the composition
+// entry instead made every user who typed the key into the settings card see
+// "no apiKey configured" forever. apiBase points at a dead local port so this
+// assertion never touches the network.
+current = { ...config, apiKey: 'sk-test-not-a-real-key', apiBase: 'http://127.0.0.1:9' }
+hooks.onChange()
+const withBalance = await reboundTools[0].execute({ includeBalance: true }, exec)
+assert.ok(withBalance.balance, 'includeBalance must produce a balance section')
+assert.doesNotMatch(
+  String(withBalance.balance.error ?? ''),
+  /no apiKey configured/,
+  'the balance must read the apiKey from the settings source, not from the composition entry',
+)
+
 // --- case 3: an older host whose settings service has no installSection ------
 // dsh 0.1.0-rc.x exposes register/get/update/replace/mutate but not
 // installSection. The plugin must degrade (tools still register) rather than
